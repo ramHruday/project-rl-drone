@@ -24,7 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-catkin_python_setup()
+# catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -204,34 +204,11 @@ include_directories(
 
 # Solutions 
 
-
-add_executable(square src/square.cpp)
-target_link_libraries(square ${catkin_LIBRARIES})
-
-add_executable(gnc_example src/gnc_tutorial.cpp)
-target_link_libraries(gnc_example ${catkin_LIBRARIES})
-
-add_executable(sub_sol src/subscriber_sol.cpp)
-target_link_libraries(sub_sol ${catkin_LIBRARIES})
-
 #add_executable(avoidance_sol src/avoidance_sol.cpp)
 #target_link_libraries(avoidance_sol ${catkin_LIBRARIES})
 
-add_executable(battery_metrics src/battery_metrics.cpp)
-target_link_libraries(battery_metrics ${catkin_LIBRARIES})
-
-add_executable(hover_person src/hover_person.cpp)
-target_link_libraries(hover_person ${catkin_LIBRARIES})
-
-add_executable(commands_battery src/commands_battery.cpp)
-target_link_libraries(commands_battery ${catkin_LIBRARIES})
-
-add_executable(camera_battery src/camera_battery.cpp)
-target_link_libraries(camera_battery ${catkin_LIBRARIES})
-
-add_executable(rl_s src/rl_s.cpp)
-target_link_libraries(rl_s ${catkin_LIBRARIES})
-
+add_executable(agent src/agent.cpp)
+target_link_libraries(agent ${catkin_LIBRARIES})
 
 add_executable(env src/env.cpp)
 target_link_libraries(env ${catkin_LIBRARIES})

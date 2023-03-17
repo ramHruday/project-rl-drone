@@ -1,55 +1,60 @@
+/*
+ AUTHOR: Rama Hruday Bandaru
+ FILENAME: env.cpp
+ SPECIFICATION: Intiates RL Environment class, Environment class observes the drone position, will be extended to supply rewards by observing the proximity of the plane.
+ FOR: CS 5392 Reinforcement Learning Section 01
+*/
+
 #include <commands_listener.hpp>
-#include <vector>
-#include <ctime>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <map>
-#include <unistd.h>
-#include <darknet_ros_msgs/BoundingBoxes.h>
 #include <std_msgs/Int64.h>
-#include <std_srvs/SetBool.h>
 #include <nav_msgs/Odometry.h>
+
+/*
+NAME: Environment
+PURPOSE: To replicate RL environment, i.e observe the agent and reward it accordingly
+INVARIANTS:
+*/
 
 class Environment
 {
 
 private:
-    int counter;
-    int victim_position;
-    ros::Publisher reward_publisher;
-    ros::Subscriber drone_positon_subscriber;
-    ros::ServiceServer reset_service;
+    ros::Subscriber drone_positon_subscriber; // a ros subsriber which subsribes to topic MAVROS_GLOBALPOSITION_LOCAL
+    geometry_msgs::Point drone_position;      // a geometry point of {x,y,z} i.e cordinates of the drone
 
 public:
     Environment(ros::NodeHandle nh)
     {
-        counter = 0;
-
-        reward_publisher = nh.advertise<std_msgs::Int64>("/number_count", 10);
-        drone_positon_subscriber = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 1000,
-                                                                    &Environment::pose_cb, this);
+        // everytime a msg appears on the topic MAVROS_GLOBALPOSITION_LOCAL, pos_callback is called passing the msg. 10 is limit of msg to be qeued
+        drone_positon_subscriber = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10,
+                                                                    &Environment::pos_callback, this);
     }
 
-    void callback_number(const std_msgs::Int64 &msg)
+    /*
+     NAME: pos_callback
+     PARAMETERS: &msg , Pointer to the reading of Odometry channel
+     PURPOSE: prints the current position of drone {x,y,z}
+     PRECONDITION: the parameter should be a odometry reading
+     POSTCONDITION: the function updates the drone position in the environment class and prints it out
+    */
+    void pos_callback(const nav_msgs::Odometry::ConstPtr &msg)
     {
-        counter += msg.data;
-        std_msgs::Int64 new_msg;
-        new_msg.data = counter;
-        reward_publisher.publish(new_msg);
-    }
-
-    void pose_cb(const nav_msgs::Odometry::ConstPtr &msg)
-    {
-
-        nav_msgs::Odometry current_pos_g;
-        current_pos_g = *msg;
-        geometry_msgs::Point current_pos_loc;
-        current_pos_loc = enu_2_local(current_pose_g);
-        ROS_INFO("cordinates pos d: %f %f", current_pos_loc.x, current_pos_loc.y);
+        nav_msgs::Odometry odo_msg;
+        odo_msg = *msg;
+        drone_position = odo_msg.pose.pose.position;
+        ROS_INFO("cordinates pos d: %f %f %f", drone_position.x, drone_position.y, drone_position.z);
     }
 };
 
+// command line or remapping arguments
+
+/*
+    NAME: main
+    PARAMETERS: argc, **argv  => command line arguments, classic way of ROS initliastion
+    PURPOSE: prints the current position of drone {x,y,z}
+    PRECONDITION: drone simulation and MAVROS must be started before this file is RUN
+    POSTCONDITION: the function spins out a ROS node "env" which which is equiped with drone position observer
+*/
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "env");
