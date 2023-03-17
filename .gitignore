@@ -1,0 +1,6 @@
+.vscode
+src/iq_gnc/
+__pycache__
+
+/build
+/docs
