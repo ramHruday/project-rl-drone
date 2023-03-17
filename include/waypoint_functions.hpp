@@ -7,7 +7,15 @@
 #include <unistd.h>
 #include <cmath>
 #include <math.h>
-#include <gnc_functions.hpp>
+
+struct gnc_api_waypoint
+{
+	float x;   ///< distance in x with respect to your reference frame
+	float y;   ///< distance in y with respect to your reference frame
+	float z;   ///< distance in z with respect to your reference frame
+	float psi; ///< rotation about the third axis of your reference frame
+	float speed;
+};
 
 struct timed_waypoint : public gnc_api_waypoint
 {
