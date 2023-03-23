@@ -7,6 +7,36 @@
 
 #include <commands_listener.hpp>
 
+pair<int, int> largest_value_in_map(
+    map<int, int> sampleMap)
+{
+
+    // Reference variable to help find
+    // the entry with the highest value
+    pair<int, int> entryWithMaxValue = make_pair(0, 0);
+
+    // Iterate in the map to find the required entry
+    map<int, int>::iterator currentEntry;
+    for (currentEntry = sampleMap.begin();
+         currentEntry != sampleMap.end();
+         ++currentEntry)
+    {
+
+        // If this entry's value is more
+        // than the max value
+        // Set this entry as the max
+        if (currentEntry->second > entryWithMaxValue.second)
+        {
+
+            entryWithMaxValue = make_pair(
+                currentEntry->first,
+                currentEntry->second);
+        }
+    }
+
+    return entryWithMaxValue;
+}
+
 /*
 NAME: Drone
 PURPOSE: To replicate RL Drone, i.e observe the agent and reward it accordingly
@@ -19,7 +49,6 @@ class Drone
 private:
     ros::Subscriber drone_pos_sub;       // subscriber to drone's position
     geometry_msgs::Point drone_position; // geometry coordinates of the drone
-    std::int reward;
 
 public:
     Drone(ros::NodeHandle nh, int[3] victim_position, int inc)
@@ -39,6 +68,7 @@ public:
 
         std::map<std::string, std::map<int, int>> QTable;
         int action[3] = {0, 1, 2};
+        std::int reward;
 
         // drone position subscriber initiated
         drone_pos_sub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10,
@@ -83,6 +113,37 @@ public:
         reward = *msg;
         std::cout << reward;
     }
+    int get_reward()
+    {
+        return reward;
+    }
+
+    void record_the_reward(int i, int j, int action)
+    {
+        std::map<int, int> random_action_reward_map;
+        random_action_reward_map.insert({k, reward});
+        QTable.insert({std::to_string(i) + std::to_string(j), random_action_reward_map});
+    }
+
+    int get_best_action(std::string state)
+    {
+        pair<int, int> action_with_max_val = largest_qval_in_map(QTable[state]);
+        return entryWithMaxValue.first
+    }
+    void act(int i)
+    {
+        switch (i)
+        {
+        case 0:
+            move_the_drone(10, drone_position.x - 5, drone_position.y, drone_position.z) break;
+        case 1:
+            move_the_drone(10, drone_position.x, drone_position.y + 5, drone_position.z) break;
+        case 2:
+            move_the_drone(10, drone_position.x + 5, drone_position.y, drone_position.z) break;
+        default:
+            // code block
+        }
+    }
 
     /*
      NAME: move_the_drone
@@ -118,6 +179,9 @@ public:
 */
 int main(int argc, char **argv)
 {
+    // increment
+    int INCREMENT = 5;
+
     // actions 0 -Left, 1 - Forward, 2- Right
     int action[3] = {0, 1, 2};
     int[3] initial_pos = {0, 0, 0};
@@ -127,6 +191,17 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
 
     Drone drone = Drone(nh, victim_pos, INCREMENT);
+
+    for (int i = 0; i < 20; i += INCREMENT)
+    {
+        for (int j = 0; j < 20; j += INCREMENT)
+        {
+            int a = drone->get_best_action(std::to_string(i) + std::to_string(j));
+            drone->act(a);
+            int reward = drone.get_reward();
+            ROS_INFO("reward is  %d", reward);
+        }
+    }
 
     wait4Land();
 }
