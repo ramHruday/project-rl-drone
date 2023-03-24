@@ -22,6 +22,7 @@
 #include <iostream>
 #include <string>
 #include <topic_tools/shape_shifter.h>
+#include <std_msgs/Int8.h>
 
 /**
 \defgroup control_functions
@@ -202,7 +203,7 @@ void set_heading(float heading)
     local_desired_heading_g = heading;
     heading = heading + correction_heading_g + local_offset_g;
 
-    ROS_INFO("Desired Heading %f ", local_desired_heading_g);
+    // ROS_INFO("Desired Heading %f ", local_desired_heading_g);
 
     float yaw = heading * (M_PI / 180);
     float pitch = 0;
@@ -244,10 +245,10 @@ void set_destination(float x, float y, float z, float psi)
     x = Xlocal + correction_vector_g.position.x + local_offset_pose_g.x;
     y = Ylocal + correction_vector_g.position.y + local_offset_pose_g.y;
     z = Zlocal + correction_vector_g.position.z + local_offset_pose_g.z;
-    ROS_INFO("Destination set to x: %f y: %f z: %f origin frame", x, y, z);
+    // ROS_INFO("Destination set to x: %f y: %f z: %f origin frame", x, y, z);
     float d = sqrt(x * x + y * y + z * z);
     total_d += d;
-    ROS_INFO("total distance  d: %f", d);
+    // ROS_INFO("total distance  d: %f", d);
 
     waypoint_g.pose.position.x = x;
     waypoint_g.pose.position.y = y;
@@ -552,10 +553,10 @@ int set_speed(float speed__mps)
     speed_cmd.request.param2 = speed__mps;
     speed_cmd.request.param3 = -1; // no throttle change
     speed_cmd.request.param4 = 0;  // absolute speed
-    ROS_INFO("setting speed to %f", speed__mps);
+
     if (command_client.call(speed_cmd))
     {
-        ROS_INFO("change speed command succeeded %d", speed_cmd.response.success);
+        // ROS_INFO("change speed command succeeded %d", speed_cmd.response.success);
         return 0;
     }
     else

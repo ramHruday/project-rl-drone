@@ -6,7 +6,7 @@
 */
 
 #include <commands_listener.hpp>
-#include <std_msgs/Int64.h>
+#include <std_msgs/Int8.h>
 #include <nav_msgs/Odometry.h>
 #include <cmath>
 
@@ -22,18 +22,19 @@ class Environment
 private:
     ros::Subscriber drone_pos_sub;       // subscriber to drone's position
     geometry_msgs::Point drone_position; // geometry coordinates of the drone
-
-    int[3] REWARDS = {-1, 0, 10};
+    ros::Publisher reward_pub;
 
 public:
-    Environment(ros::NodeHandle nh, int[3] victim_position, int inc)
+    int REWARDS[3] = {-1, 0, 10};
+    int victim_position[3] = {20, 20, 0}; // x,y,z cordinates of the victim
+    Environment(ros::NodeHandle nh, int inc)
     {
         // drone position subscriber initiated
         drone_pos_sub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10,
                                                          &Environment::pos_callback, this);
 
         // publish reward here
-        reward_pub = controlnode.advertise<std::int>("/reward", 10);
+        reward_pub = nh.advertise<std_msgs::Int8>("/reward", 10);
     }
 
     /*
@@ -48,16 +49,19 @@ public:
         nav_msgs::Odometry odo_msg;
         odo_msg = *msg;
         drone_position = odo_msg.pose.pose.position;
-        ROS_INFO("coordinates pos d: %f %f %f", drone_position.x, drone_position.y, drone_position.z);
-        double[2] polar = get_polar_coordinates();
-        if (polar[0] < 10)
+        // ROS_INFO("coordinates pos d: %f %f %f", drone_position.x, drone_position.y, drone_position.z);
+        std::pair<double, double> polar = get_polar_coordinates();
+        std_msgs::Int8 new_msg;
+        if (polar.first < 10)
         {
-            reward_pub.publish(REWARDS[1])
+            new_msg.data = 10;
         }
-        else if (polar[0] > 20)
+        else
         {
-            reward_pub.publish(REWARDS[0])
+            new_msg.data = 0;
         }
+        ROS_INFO("Polar co-ordinates %f %f", polar.first, polar.second);
+        reward_pub.publish(new_msg);
     }
 
     /*
@@ -67,11 +71,11 @@ public:
     PRECONDITION: drone simulation and person must be standing in the gazebo world
     POSTCONDITION: the function returns polar coordniates, later translated as state of the drone, no direct effect on the movement or navigation
     */
-    double[2] get_polar_coordinates()
+    std::pair<double, double> get_polar_coordinates()
     {
-        double r = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2) + pow(z1 - z2, 2));
-        double theta = asin(z / r);
-        return {r, theta};
+        double r = sqrt(pow(drone_position.x - victim_position[0], 2) + pow(drone_position.y - victim_position[1], 2) + pow(drone_position.z - victim_position[2], 2));
+        double theta = asin(drone_position.z / r);
+        return std::make_pair(r, theta);
     }
 };
 
@@ -88,8 +92,6 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "env");
     ros::NodeHandle nh;
 
-    int[3] victim_pos = {20, 20, 0} // x,y,z cordinates of the victim
-
-    Environment nc = Environment(nh, victim_pos, INCREMENT);
+    Environment nc = Environment(nh, INCREMENT);
     ros::spin();
 }
