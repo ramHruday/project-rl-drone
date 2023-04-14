@@ -326,7 +326,7 @@ int main(int argc, char **argv)
     float gamma = 0.5;
 
     // Threshold for iterations
-    int thresh = 2;
+    int thresh = 20000;
 
     // initialize ros
     ros::init(argc, argv, "drone_nav");
