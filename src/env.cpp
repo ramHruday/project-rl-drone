@@ -56,11 +56,16 @@ public:
         {
             new_msg.data = 10;
         }
+        else if (polar.first > 20)
+        {
+            new_msg.data = (int)-1 * polar.first;
+        }
         else
         {
-            new_msg.data = 0;
+            new_msg.data = (int)1 / 10 * polar.first;
         }
         ROS_INFO("Polar co-ordinates %f %f", polar.first, polar.second);
+        ROS_INFO("Polar co-ordinates %d", new_msg.data);
         reward_pub.publish(new_msg);
     }
 

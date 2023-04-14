@@ -212,3 +212,6 @@ target_link_libraries(agent ${catkin_LIBRARIES})
 
 add_executable(env src/env.cpp)
 target_link_libraries(env ${catkin_LIBRARIES})
+
+add_executable(agent_sarsa src/agent_sarsa.cpp)
+target_link_libraries(agent_sarsa ${catkin_LIBRARIES})

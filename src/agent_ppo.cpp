@@ -60,8 +60,6 @@ public:
     //  Q-learning table
     std::map<std::string, std::map<int, int>> QTable;
 
-    std::vector<std::string> states;
-
     // Action space, next release action space would be recieved from ENV class.
     int action[3] = {0, 1, 2};
 
@@ -73,15 +71,14 @@ public:
     int height;
 
     // alpha and gamma values for the Q-learning
-    float alpha = 0.8;
+    float alpha;
     float gamma;
-    float epsilon = 0.9;
 
     // the reset parameters for drone
     bool reset_flag = false;
     int reset_counter = 0;
 
-    Drone(ros::NodeHandle nh, int victim_position[3], int inc, int h, float al, float g, float e)
+    Drone(ros::NodeHandle nh, int victim_position[3], int inc, int h, int al, float g)
     {
 
         // drone position subscriber initiated
@@ -92,7 +89,6 @@ public:
         height = h;
         alpha = al;
         gamma = g;
-        epsilon = e;
 
         // initiate random QTable and iterate over possible states from victim position using inc
         for (int i = 0; i < victim_position[0]; i += inc)
@@ -107,8 +103,6 @@ public:
                     random_action_reward_map.insert({k, random_v});
                 }
                 QTable.insert({std::to_string(i) + std::to_string(j), random_action_reward_map});
-
-                states.push_back(state_maker(i, j));
             }
         }
     }
@@ -134,23 +128,15 @@ public:
             reset_flag = false;
             reset_counter = 0;
         }
+        // ROS_INFO("coordinates pos d: %f %f %f", drone_position.x, drone_position.y, drone_position.z);
     }
 
-    /*
-    NAME: callback_number
-    PARAMETERS: &msg , Pointer to the reading of reward channel
-    PURPOSE: stores current published reward into reward_msgs, this is not reward accepted by the drone
-   */
     void callback_number(const std_msgs::Int8 &msg)
     {
+        std::cout << msg.data;
         reward_msg = msg.data;
     }
 
-    /*
-    NAME: get_reward
-    PARAMETERS: na
-    PURPOSE: actual reward acceptance by the drone
-   */
     int get_reward()
     {
         reward += reward_msg;
@@ -158,40 +144,12 @@ public:
         return reward;
     }
 
-    /*
-        NAME: get_best_action
-        PARAMETERS: state
-        PURPOSE: gets the best action for a state i.e max Q value from Qtable map
-    */
     std::pair<int, int> get_best_action(std::string state)
 
     {
         return largest_qval_in_map(QTable[state]);
     }
 
-    std::pair<int, int> get_action(std::string state)
-    {
-        std::pair<int, int> a;
-        float r = rand() / RAND_MAX;
-        int random_action_index = (rand() % 2) + 1;
-        if (r < epsilon)
-        {
-            a = std::make_pair(
-                action[random_action_index],
-                0);
-        }
-
-        else
-        {
-            a = get_best_action(state);
-        }
-        return a;
-    }
-    /*
-        NAME: act
-        PARAMETERS: action
-        PURPOSE: if action is 0 the drone moves left, 1- front, 2 - right
-    */
     int act(int action)
     {
         switch (action)
@@ -239,11 +197,6 @@ public:
         }
     };
 
-    /*
-            NAME: reset
-            PARAMETERS: na
-            PURPOSE: resets the drone in to start state for the next iteration
-        */
     void reset()
     {
         reset_flag = true;
@@ -253,23 +206,15 @@ public:
         drone_position.z = 0;
     }
 
-    /*
-        NAME: set_Q_value
-        PARAMETERS: state - current state of the drone, action - action took by the drone, next_state - next state of the drone,reward
-        PURPOSE: sets the Q-value according to Q-learning algorithm
-    */
-    void set_Q_value(std::string state, std::string next_state, int action, int reward, int next_action)
+    void set_Q_value(std::string state, std::string next_state, int action, int reward)
     {
         std::map<int, int> action_reward_pair;
 
         // Q(s,a) = Q(s,a) + x(reward + max(Q(s',a') - Q(s,a)))
         int Q_s_a = QTable[state][action];
-        int nxt = QTable[next_state][next_action];
-        float v = alpha * (reward + gamma * QTable[next_state][next_action] - Q_s_a);
-        float Q_s_c = Q_s_a + alpha * (reward + gamma * QTable[next_state][next_action] - Q_s_a);
-        action_reward_pair.insert({action, (int)Q_s_c});
+        Q_s_a = Q_s_a + alpha * (reward + gamma * largest_qval_in_map(QTable[next_state]).second - Q_s_a);
+        action_reward_pair.insert({action, Q_s_a});
         QTable.insert({state, action_reward_pair});
-        ROS_INFO("q value: %f alpha %f nxt %d reward %d gamma %f", v, alpha, nxt, reward, gamma);
     }
 };
 
@@ -282,26 +227,18 @@ public:
 */
 int main(int argc, char **argv)
 {
-    // initiate random library for random number generation (Used in inital Qvalue)
     srand(time(0));
-
-    // increment of drone travel
+    // increment
     int INCREMENT = 5;
 
-    // height of the drone flight
+    // height
     int height = 3;
 
     // actions 0 -Left, 1 - Forward, 2- Right
     int action[3] = {0, 1, 2};
     int initial_pos[3] = {0, 0, 0};
-
-    // alpha gamma values for Q_learning
-    float alpha = 0.9;
+    float alpha = 0.8;
     float gamma = 0.5;
-
-    // Threshold for iterations
-    int thresh = 2;
-
     // initialize ros
     ros::init(argc, argv, "drone_nav");
     ros::NodeHandle n;
@@ -321,50 +258,34 @@ int main(int argc, char **argv)
     // mission here
     takeoff(height);
 
-    // Victim position
     int victim_pos[3] = {20, 20, 0};
-
-    // counter for iterations
     int iterations = 0;
-
-    // Initiate Drone class
-    Drone drone = Drone(n, victim_pos, INCREMENT, height, alpha, gamma, 0.9);
-
-    std::vector<std::string> discrete_state_space = drone.states;
-    while (iterations < thresh)
+    Drone drone = Drone(n, victim_pos, INCREMENT, height, alpha, gamma);
+    while (iterations < 3)
     {
         drone.reset();
-        for (size_t i = 0; i < discrete_state_space.size() - 1; ++i)
+        for (int i = 0; i < victim_pos[0]; i += INCREMENT)
         {
-            // the current state of the drone is xy cordinates of the waypoints
-            std::string current_state = discrete_state_space[i];
-
-            // best action and Qvalue pair for a given state
-            std::pair<int, int> s_a_pair = drone.get_best_action(current_state);
-
-            int current_action = s_a_pair.first;
-            std::cout << "Current Action  " << current_action << ", Qval " << s_a_pair.second << std::endl;
-
-            // Ansync call to move the drone via Drone.act(), passing current action as parameter
-            std::future<int> ft = std::async(std::launch::async, &Drone::act, drone, current_action);
-
-            int v = ft.get(); // code to finish the ansync, no significance for v
-
-            // accept reward into the drone system/class
-            int reward = drone.get_reward();
-
-            // Run the Q-value setting algorithm here passing down current state, next state, action and reward
-            if (i < discrete_state_space.size() - 1)
+            for (int j = 0; j < victim_pos[1]; j += INCREMENT)
             {
-                std::string next_state = discrete_state_space[i + 1];
-                std::pair<int, int> s_a_pair2 = drone.get_action(current_state);
+                std::string current_state = state_maker(i, j);
+                std::pair<int, int> s_a_pair = drone.get_best_action(current_state);
 
-                drone.set_Q_value(current_state, next_state, current_action, reward, s_a_pair2.first);
+                int current_action = s_a_pair.first;
+                std::cout << "Current Action  " << current_action << ", Qval " << s_a_pair.second << std::endl;
+
+                std::future<int> ft = std::async(std::launch::async, &Drone::act, drone, current_action);
+                int v = ft.get(); // code to finish the ansync, no significance for v
+
+                int reward = drone.get_reward();
+                if (j < victim_pos[1])
+                {
+                    drone.set_Q_value(current_state, state_maker(i, j + 1), current_action, reward);
+                }
             }
         }
         iterations++;
     }
 
-    // Once drone completes the iteration , wait for user command to drone for landing.
     wait4Land();
 }
