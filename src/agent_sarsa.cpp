@@ -13,16 +13,16 @@ std::string state_maker(int i, int j)
     return std::to_string(i) + std::to_string(j);
 }
 
-std::pair<int, int> largest_qval_in_map(
-    std::map<int, int> sampleMap)
+std::pair<int, float> largest_qval_in_map(
+    std::map<int, float> sampleMap)
 {
 
     // Reference variable to help find
     // the entry with the highest value
-    std::pair<int, int> entryWithMaxValue = std::make_pair(0, 0);
+    std::pair<int, float> entryWithMaxValue = std::make_pair(0, 0);
 
     // Iterate in the map to find the required entry
-    std::map<int, int>::iterator currentEntry;
+    std::map<int, float>::iterator currentEntry;
     for (currentEntry = sampleMap.begin();
          currentEntry != sampleMap.end();
          ++currentEntry)
@@ -58,7 +58,7 @@ private:
 
 public:
     //  Q-learning table
-    std::map<std::string, std::map<int, int>> QTable;
+    std::map<std::string, std::map<int, float>> QTable;
 
     std::vector<std::string> states;
 
@@ -99,11 +99,11 @@ public:
         {
             for (int j = 0; j < victim_position[1]; j += inc)
             {
-                std::map<int, int> random_action_reward_map;
+                std::map<int, float> random_action_reward_map;
                 for (int k : action)
                 {
 
-                    int random_v = (rand() % 5) + 1;
+                    float random_v = (rand() % 5) + 1;
                     random_action_reward_map.insert({k, random_v});
                 }
                 QTable.insert({std::to_string(i) + std::to_string(j), random_action_reward_map});
@@ -153,7 +153,7 @@ public:
    */
     int get_reward()
     {
-        reward += reward_msg;
+        reward = reward_msg;
         std::cout << "reward is " << reward_msg << std::endl;
         return reward;
     }
@@ -163,15 +163,15 @@ public:
         PARAMETERS: state
         PURPOSE: gets the best action for a state i.e max Q value from Qtable map
     */
-    std::pair<int, int> get_best_action(std::string state)
+    std::pair<int, float> get_best_action(std::string state)
 
     {
         return largest_qval_in_map(QTable[state]);
     }
 
-    std::pair<int, int> get_action(std::string state)
+    std::pair<int, float> get_action(std::string state)
     {
-        std::pair<int, int> a;
+        std::pair<int, float> a;
         float r = rand() / RAND_MAX;
         int random_action_index = (rand() % 2) + 1;
         if (r < epsilon)
@@ -340,10 +340,10 @@ int main(int argc, char **argv)
             std::string current_state = discrete_state_space[i];
 
             // best action and Qvalue pair for a given state
-            std::pair<int, int> s_a_pair = drone.get_best_action(current_state);
+            std::pair<int, float> a_qval = drone.get_best_action(current_state);
 
-            int current_action = s_a_pair.first;
-            std::cout << "Current Action  " << current_action << ", Qval " << s_a_pair.second << std::endl;
+            int current_action = a_qval.first;
+            std::cout << "Current Action  " << current_action << ", Qval " << a_qval.second << std::endl;
 
             // Ansync call to move the drone via Drone.act(), passing current action as parameter
             std::future<int> ft = std::async(std::launch::async, &Drone::act, drone, current_action);
@@ -357,9 +357,9 @@ int main(int argc, char **argv)
             if (i < discrete_state_space.size() - 1)
             {
                 std::string next_state = discrete_state_space[i + 1];
-                std::pair<int, int> s_a_pair2 = drone.get_action(current_state);
+                std::pair<int, float> a_qval2 = drone.get_action(current_state);
 
-                drone.set_Q_value(current_state, next_state, current_action, reward, s_a_pair2.first);
+                drone.set_Q_value(current_state, next_state, current_action, reward, a_qval2.first);
             }
         }
         iterations++;
