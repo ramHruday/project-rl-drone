@@ -1,0 +1,8 @@
+Examples or Test cases cannot be provided for this particular problem as
+
+1. The ROS nodes are directly connected to the cpp file (CMakeLists.txt), which makes it difficult to have a unit test cases.
+e.g. 
+agent_sarsa.cpp - is a ROS node which is responsible for driving the AGENT(drone) in sarsa learning mode.
+agent_ql.cpp - is a ROS node which is responsible for driving the AGENT(drone) in Qlearning mode.
+
+env.cpp - is a ROS node responsible for creating a env which publishes rewards based on the drones distance to the person.

@@ -1,0 +1,52 @@
+To run this code, make sure Tutorial 1 [1] is completely performed.
+
+Build commands
+
+    cd catkin_ws
+    catkin build
+    source ~/.bashrc
+
+Once build folder is created. You can now run following commands separately in new tabs of linux kernel
+roslaunch iq_gnc empty-world.launch
+1)	Run Gazebo
+    Open a new terminal and run the below command.
+
+    roslaunch iq_gnc empty-world.launch
+
+2)	Run SITL – Software simulation of the Drone
+    Open  a new terminal and run the below command.
+
+    ./startsitl.sh
+
+3)	Run APM (communication between ROS – SITL )
+    Open  a new terminal and run the below command.
+
+    roslaunch  iq_sim  apm.launch
+
+    ## Wait for 1 min before running the below commands. This is to give time for SITL to properly configure IMU and GPS systems. 
+
+
+4)	Run Our RL environment.
+    Open a new terminal and run the below command
+
+    rosrun iq_gnc env
+
+5)	Run Our RL Drone Navigation (agent)
+    Open a new terminal and run the below command.
+    
+    rosrun iq_gnc agent_sarsa
+
+INFO
+
+src/
+    agent_sarsa.cpp - is a ROS node which is responsible for driving the AGENT(drone) in sarsa learning mode.
+    agent_ql.cpp - is a ROS node which is responsible for driving the AGENT(drone) in Qlearning mode.
+    env.cpp - is a ROS node responsible for creating a env which publishes rewards based on the drones distance to the person.
+
+launch/
+empty_world.launch - file for gazebo physics
+
+include/
+commands_listener.hpp - library for encapsulating drone movements , setting drone speed, yaw, alignment etc.
+
+CMakeLists. txt  - file contains a set of directives and instructions describing the project's source files and targets (executable, library, or both).
