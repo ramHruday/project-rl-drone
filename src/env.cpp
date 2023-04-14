@@ -22,7 +22,7 @@ class Environment
 private:
     ros::Subscriber drone_pos_sub;       // subscriber to drone's position
     geometry_msgs::Point drone_position; // geometry coordinates of the drone
-    ros::Publisher reward_pub;           // publisher for reward
+    ros::Publisher reward_pub;
 
 public:
     int REWARDS[3] = {-1, 0, 10};
