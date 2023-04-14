@@ -13,6 +13,35 @@ std::string state_maker(int i, int j)
     return std::to_string(i) + std::to_string(j);
 }
 
+/*
+NAME: printQtableSA
+PARAMETERS: aTable - map of action and Qvalue
+PURPOSE: prints the action and Qvalues of a State
+*/
+void printQtableSA(std::map<int, float> aTable)
+{
+    for (auto it = aTable.begin();
+         it != aTable.end(); ++it)
+    {
+        std::cout << "     Action" << it->first << " value" << it->second << std::endl;
+    }
+}
+
+/*
+NAME: printQtable
+PARAMETERS: QTable - map of State and action table
+PURPOSE: prints the entire Qtable
+*/
+void printQtable(std::map<std::string, std::map<int, float>> qtable)
+{
+    for (auto it = qtable.begin();
+         it != qtable.end(); ++it)
+    {
+        std::cout << "State " << it->first << std::endl;
+        printQtableSA(it->second);
+    }
+}
+
 std::pair<int, float> largest_qval_in_map(
     std::map<int, float> sampleMap)
 {
@@ -260,16 +289,13 @@ public:
     */
     void set_Q_value(std::string state, std::string next_state, int action, int reward, int next_action)
     {
-        std::map<int, int> action_reward_pair;
-
-        // Q(s,a) = Q(s,a) + x(reward + max(Q(s',a') - Q(s,a)))
+        auto action_reward_pair = QTable[state];
         int Q_s_a = QTable[state][action];
-        int nxt = QTable[next_state][next_action];
-        float v = alpha * (reward + gamma * QTable[next_state][next_action] - Q_s_a);
+
+        // SARSA equation
         float Q_s_c = Q_s_a + alpha * (reward + gamma * QTable[next_state][next_action] - Q_s_a);
-        action_reward_pair.insert({action, (int)Q_s_c});
-        QTable.insert({state, action_reward_pair});
-        ROS_INFO("q value: %f alpha %f nxt %d reward %d gamma %f", v, alpha, nxt, reward, gamma);
+        action_reward_pair[action] = Q_s_c;
+        QTable[state] = action_reward_pair;
     }
 };
 
@@ -333,7 +359,6 @@ int main(int argc, char **argv)
     std::vector<std::string> discrete_state_space = drone.states;
     while (iterations < thresh)
     {
-        drone.reset();
         for (size_t i = 0; i < discrete_state_space.size() - 1; ++i)
         {
             // the current state of the drone is xy cordinates of the waypoints
@@ -363,8 +388,11 @@ int main(int argc, char **argv)
             }
         }
         iterations++;
+        drone.reset();
     }
 
+    //  prints the New Qtable
+    printQtable(drone.QTable);
     // Once drone completes the iteration , wait for user command to drone for landing.
     wait4Land();
 }
