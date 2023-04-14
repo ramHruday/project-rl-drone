@@ -1,3 +1,10 @@
+/*
+ AUTHOR: Greeshma Kundrapu
+ FILENAME: examples.txt
+ SPECIFICATION: Basic build and file descriptions
+ FOR: CS 5392 Reinforcement Learning Section 01
+*/
+
 Examples or Test cases cannot be provided for this particular problem as
 
 1. The ROS nodes are directly connected to the cpp file (CMakeLists.txt), which makes it difficult to have a unit test cases.

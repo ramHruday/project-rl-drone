@@ -1,5 +1,5 @@
 /*
- AUTHOR: Rama Hruday Bandaru
+ AUTHOR: Rama Hruday Bandaru,Venkata Hemanth Srivillibhuthur
  FILENAME: env.cpp
  SPECIFICATION: Intiates RL Environment class, Environment class observes the drone position, will be extended to supply rewards by observing the proximity of the plane.
  FOR: CS 5392 Reinforcement Learning Section 01
