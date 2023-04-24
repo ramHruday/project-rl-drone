@@ -1,20 +1,4 @@
-/*
- AUTHOR: Rama Hruday Bandaru,Venkata Hemanth Srivillibhuthur
- FILENAME: env.cpp
- SPECIFICATION: Intiates RL Environment class, Environment class observes the drone position, will be extended to supply rewards by observing the proximity of the plane.
- FOR: CS 5392 Reinforcement Learning Section 01
-*/
-
-#include <commands_listener.hpp>
-#include <std_msgs/Int8.h>
-#include <nav_msgs/Odometry.h>
-#include <cmath>
-
-/*
-NAME: Environment
-PURPOSE: To replicate RL environment, i.e observe the agent and reward it accordingly
-INVARIANTS:
-*/
+#include <utilities.hpp>
 
 class Environment
 {
@@ -27,8 +11,14 @@ private:
 public:
     int REWARDS[3] = {-1, 0, 10};
     int victim_position[3] = {20, 20, 0}; // x,y,z cordinates of the victim
-    Environment(ros::NodeHandle nh, int inc)
+    Environment(int inc)
     {
+        int INCREMENT = 5;
+        ros::init(argc, argv, "env");
+        ros::NodeHandle nh;
+
+        Environment nc = Environment(nh, INCREMENT);
+        ros::spin();
         // drone position subscriber initiated
         drone_pos_sub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10,
                                                          &Environment::pos_callback, this);
@@ -83,20 +73,3 @@ public:
         return std::make_pair(r, theta);
     }
 };
-
-/*
-    NAME: main
-    PARAMETERS: argc, **argv  => command line arguments, classic way of ROS initliastion
-    PURPOSE: prints the current position of drone {x,y,z}
-    PRECONDITION: drone simulation and MAVROS must be started before this file is RUN
-    POSTCONDITION: the function spins out a ROS node "env" which which is equiped with drone position observer
-*/
-int main(int argc, char **argv)
-{
-    int INCREMENT = 5;
-    ros::init(argc, argv, "env");
-    ros::NodeHandle nh;
-
-    Environment nc = Environment(nh, INCREMENT);
-    ros::spin();
-}

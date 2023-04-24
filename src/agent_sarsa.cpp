@@ -5,6 +5,7 @@
  FOR: CS 5392 Reinforcement Learning Section 01
 */
 #include <drone.hpp>
+#include <env.hpp>
 #include <future>
 
 /*
@@ -41,6 +42,9 @@ int main(int argc, char **argv)
 
     // counter for iterations
     int iterations = 0;
+
+    // Initiate Env class
+    Environment Env = Environment(INCREMENT);
 
     // Initiate Drone class
     Drone drone = Drone(argc, argv, victim_pos, INCREMENT, height, alpha, gamma, 0.9);

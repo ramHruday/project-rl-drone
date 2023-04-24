@@ -209,8 +209,5 @@ include_directories(
 add_executable(agent_ql src/agent_ql.cpp)
 target_link_libraries(agent_ql ${catkin_LIBRARIES})
 
-add_executable(env src/env.cpp)
-target_link_libraries(env ${catkin_LIBRARIES})
-
 add_executable(agent_sarsa src/agent_sarsa.cpp)
 target_link_libraries(agent_sarsa ${catkin_LIBRARIES})
