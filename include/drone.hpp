@@ -1,9 +1,4 @@
-#include <ros/ros.h>
-#include <nav_msgs/Odometry.h>
-#include <geometry_msgs/Pose.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
-
+#include <utilities.hpp>
 /*
 NAME: Drone
 PURPOSE: To replicate RL Drone, i.e observe the agent and reward it accordingly
@@ -42,8 +37,26 @@ public:
     bool reset_flag = false;
     int reset_counter = 0;
 
-    Drone(ros::NodeHandle nh, int victim_position[3], int inc, int h, float al, float g, float e)
+    Drone(int argc, char **argv, int victim_position[3], int inc, int h, float al, float g, float e)
     {
+        // initialize ros
+        ros::init(argc, argv, "drone_nav");
+        ros::NodeHandle nh;
+
+        // initialize control publisher/subscribers
+        init_publisher_subscriber(nh, false);
+
+        // wait for FCU connection
+        wait4connect();
+
+        // wait for user to switch to mode GUIDED
+        wait4start();
+
+        // the intital position of drone is set as origin.
+        initialize_local_frame();
+
+        // mission here
+        takeoff(height);
 
         // drone position subscriber initiated
         drone_pos_sub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10,
@@ -55,7 +68,7 @@ public:
         gamma = g;
         epsilon = e;
 
-        // initiate random QTable and iterate over possible states from victim position using inc
+                // initiate random QTable and iterate over possible states from victim position using inc
         for (int i = 0; i < victim_position[0]; i += inc)
         {
             for (int j = 0; j < victim_position[1]; j += inc)
@@ -72,11 +85,6 @@ public:
                 states.push_back(state_maker(i, j));
             }
         }
-    }
-
-    std::string state_maker(int i, int j)
-    {
-        return std::to_string(i) + std::to_string(j);
     }
 
     /*
