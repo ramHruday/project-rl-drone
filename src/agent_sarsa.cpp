@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     int iterations = 0;
 
     // Initiate Env class
-    Environment Env = Environment(INCREMENT);
+    Environment Env = Environment(argc, argv, INCREMENT);
 
     // Initiate Drone class
     Drone drone = Drone(argc, argv, victim_pos, INCREMENT, height, alpha, gamma, 0.9);

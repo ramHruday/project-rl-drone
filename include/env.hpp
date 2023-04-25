@@ -1,4 +1,12 @@
-#include <utilities.hpp>
+
+#include <ros/ros.h>
+#include <std_msgs/Float64.h>
+#include <std_msgs/String.h>
+
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <nav_msgs/Odometry.h>
 
 class Environment
 {
@@ -11,13 +19,11 @@ private:
 public:
     int REWARDS[3] = {-1, 0, 10};
     int victim_position[3] = {20, 20, 0}; // x,y,z cordinates of the victim
-    Environment(int inc)
+    Environment(int argc, char **argv, int inc)
     {
         int INCREMENT = 5;
         ros::init(argc, argv, "env");
         ros::NodeHandle nh;
-
-        Environment nc = Environment(nh, INCREMENT);
         ros::spin();
         // drone position subscriber initiated
         drone_pos_sub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10,
