@@ -110,7 +110,7 @@ public:
     bool reset_flag = false;
     int reset_counter = 0;
 
-    Drone(ros::NodeHandle nh, int victim_position[3], int inc, int h, float al, float g, float e)
+    Drone(ros::NodeHandle nh, int victim_position[3], int inc, int h, float al, float g, float e, float alphab, float gammab)
     {
 
         // drone position subscriber initiated
@@ -297,6 +297,16 @@ public:
         action_reward_pair[action] = Q_s_c;
         QTable[state] = action_reward_pair;
     }
+    void set_BL_Q_value(std::string state, std::string next_state, int action, int reward, int next_action)
+    {
+        auto action_reward_pair = QTable[state];
+        int Q_s_a = QTable[state][action];
+
+        // Backward learning
+        float Q_s_c = Q_s_a + alphab * (reward + gammab * largest_qval_in_map(QTable[next_state]).second - Q_s_a);
+        action_reward_pair[action] = Q_s_c;
+        QTable[state] = action_reward_pair;
+    }
 };
 
 /*
@@ -326,8 +336,8 @@ int main(int argc, char **argv)
     float gamma = 0.5;
 
     // alpha gamma values for backward_learning
-    float alphab = 0.9;
-    float gammab = 0.5;
+    float alphab = 0.7;
+    float gammab = 0.55;
 
     // Threshold for iterations
     int thresh = 2;
@@ -358,12 +368,12 @@ int main(int argc, char **argv)
     int iterations = 0;
 
     // Initiate Drone class
-    Drone drone = Drone(n, victim_pos, INCREMENT, height, alpha, gamma, 0.9);
+    Drone drone = Drone(n, victim_pos, INCREMENT, height, alpha, gamma, 0.9, alphab, gammab);
 
     std::vector<std::string> discrete_state_space = drone.states;
     while (iterations < thresh)
     {
-        std::map<string, int> actionHistory;
+        std::map<string, int[2]> actionHistory;
         for (size_t i = 0; i < discrete_state_space.size() - 1; ++i)
         {
             // the current state of the drone is xy cordinates of the waypoints
@@ -374,7 +384,6 @@ int main(int argc, char **argv)
 
             int current_action = a_qval.first;
             std::cout << "Current Action  " << current_action << ", Qval " << a_qval.second << std::endl;
-            actionHistory.insert({current_state, current_action});
             // Ansync call to move the drone via Drone.act(), passing current action as parameter
             std::future<int> ft = std::async(std::launch::async, &Drone::act, drone, current_action);
 
@@ -382,6 +391,7 @@ int main(int argc, char **argv)
 
             // accept reward into the drone system/class
             int reward = drone.get_reward();
+            actionHistory.insert({current_state, {current_action, reward}});
 
             // Run the Q-value setting algorithm here passing down current state, next state, action and reward
             if (i < discrete_state_space.size() - 1)
@@ -400,10 +410,10 @@ int main(int argc, char **argv)
             // Run the Q-value setting algorithm here passing down current state, next state, action and reward
             if (i > 0)
             {
-                std::string next_state = discrete_state_space[i + 1];
+                std::string next_state = discrete_state_space[i - 1];
                 std::pair<int, float> a_qval2 = drone.get_action(current_state);
 
-                drone.set_Q_value(current_state, next_state, actionHistory[current_state], a_qval2.second, a_qval2.first);
+                drone.set_BL_Q_value(current_state, next_state, actionHistory[current_state][0], actionHistory[current_state][1], a_qval2.first);
             }
         }
         iterations++;
