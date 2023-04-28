@@ -5,218 +5,8 @@
  FOR: CS 5392 Reinforcement Learning Section 01
 */
 
-#include <commands_listener.hpp>
 #include <future>
-
-std::string state_maker(int i, int j)
-{
-    return std::to_string(i) + std::to_string(j);
-}
-
-std::pair<int, int> largest_qval_in_map(
-    std::map<int, int> sampleMap)
-{
-
-    // Reference variable to help find
-    // the entry with the highest value
-    std::pair<int, int> entryWithMaxValue = std::make_pair(0, 0);
-
-    // Iterate in the map to find the required entry
-    std::map<int, int>::iterator currentEntry;
-    for (currentEntry = sampleMap.begin();
-         currentEntry != sampleMap.end();
-         ++currentEntry)
-    {
-
-        // If this entry's value is more
-        // than the max value
-        // Set this entry as the max
-        if (currentEntry->second > entryWithMaxValue.second)
-        {
-
-            entryWithMaxValue = std::make_pair(
-                currentEntry->first,
-                currentEntry->second);
-        }
-    }
-
-    return entryWithMaxValue;
-}
-
-/*
-NAME: Drone
-PURPOSE: To replicate RL Drone, i.e observe the agent and reward it accordingly
-INVARIANTS:
-*/
-class Drone
-{
-
-private:
-    ros::Subscriber drone_pos_sub;       // subscriber to drone's position
-    geometry_msgs::Point drone_position; // geometry coordinates of the drone
-    ros::Subscriber reward_sub;          // subscribes to rewards topic advertised by teh enviroment
-
-public:
-    //  Q-learning table
-    std::map<std::string, std::map<int, int>> QTable;
-
-    // Action space, next release action space would be recieved from ENV class.
-    int action[3] = {0, 1, 2};
-
-    // Params for reward and a store for reward_msg
-    int reward_msg;
-    int reward;
-
-    // Height for the drone, in this release height is kept constant
-    int height;
-
-    // alpha and gamma values for the Q-learning
-    float alpha;
-    float gamma;
-
-    // the reset parameters for drone
-    bool reset_flag = false;
-    int reset_counter = 0;
-
-    Drone(ros::NodeHandle nh, int victim_position[3], int inc, int h, int al, float g)
-    {
-
-        // drone position subscriber initiated
-        drone_pos_sub = nh.subscribe<nav_msgs::Odometry>("/mavros/global_position/local", 10,
-                                                         &Drone::pos_callback, this);
-        reward_sub = nh.subscribe("/reward", 10,
-                                  &Drone::callback_number, this);
-        height = h;
-        alpha = al;
-        gamma = g;
-
-        // initiate random QTable and iterate over possible states from victim position using inc
-        for (int i = 0; i < victim_position[0]; i += inc)
-        {
-            for (int j = 0; j < victim_position[1]; j += inc)
-            {
-                std::map<int, int> random_action_reward_map;
-                for (int k : action)
-                {
-
-                    int random_v = (rand() % 5) + 1;
-                    random_action_reward_map.insert({k, random_v});
-                }
-                QTable.insert({std::to_string(i) + std::to_string(j), random_action_reward_map});
-            }
-        }
-    }
-
-    /*
-     NAME: pos_callback
-     PARAMETERS: &msg , Pointer to the reading of Odometry channel
-     PURPOSE: prints the current position of drone {x,y,z}
-     PRECONDITION: the parameter should be a odometry reading
-     POSTCONDITION: the function updates the drone position in the environment class and prints it out
-    */
-    void pos_callback(const nav_msgs::Odometry::ConstPtr &msg)
-    {
-        nav_msgs::Odometry odo_msg;
-        odo_msg = *msg;
-        if (!reset_flag)
-        {
-            drone_position = odo_msg.pose.pose.position;
-        }
-        reset_counter++;
-        if (reset_counter > 10)
-        {
-            reset_flag = false;
-            reset_counter = 0;
-        }
-        // ROS_INFO("coordinates pos d: %f %f %f", drone_position.x, drone_position.y, drone_position.z);
-    }
-
-    void callback_number(const std_msgs::Int8 &msg)
-    {
-        std::cout << msg.data;
-        reward_msg = msg.data;
-    }
-
-    int get_reward()
-    {
-        reward += reward_msg;
-        std::cout << "reward is " << reward_msg << std::endl;
-        return reward;
-    }
-
-    std::pair<int, int> get_best_action(std::string state)
-
-    {
-        return largest_qval_in_map(QTable[state]);
-    }
-
-    int act(int action)
-    {
-        switch (action)
-        {
-        case 0:
-            std::cout << "Move LEFT" << std::endl;
-            move_the_drone(10, drone_position.x - 5, drone_position.y, height);
-            break;
-        case 1:
-            std::cout << "Move FRONT" << std::endl;
-
-            move_the_drone(10, drone_position.x, drone_position.y + 5, height);
-            break;
-        default:
-            std::cout << "Move RIGHT" << std::endl;
-            move_the_drone(10, drone_position.x + 5, drone_position.y, height);
-            break;
-        }
-        return 1;
-    }
-
-    /*
-     NAME: move_the_drone
-     PARAMETERS: speed (Speed of the drone), x, y, z (Coordinates)
-     PURPOSE: moves the drone to x,y,z point with velocity "speed m/s"
-     PRECONDITION: drone must be switched ON
-     POSTCONDITION: the function moves the drone to x,y,z point in the space with velocity "speed m/s"
-    */
-    void move_the_drone(int speed, int x, int y, int z)
-    {
-
-        ros::Rate rate(2);
-        while (ros::ok())
-        {
-            ros::spinOnce();
-            rate.sleep();
-            if (check_waypoint_reached(.3) == 1)
-            {
-                set_speed(speed);
-
-                set_destination(x, y, 3, 10);
-
-                break;
-            }
-        }
-    };
-
-    void reset()
-    {
-        reset_flag = true;
-        move_the_drone(20, 0, 0, height);
-        drone_position.x = 0;
-        drone_position.y = 0;
-        drone_position.z = 0;
-    }
-
-    void set_Q_value(std::string state, std::string next_state, int action, int reward)
-    {
-        std::map<int, int> action_reward_pair;
-
-        // Q(s,a) = Q(s,a) + x(reward + max(Q(s',a') - Q(s,a)))
-        int Q_s_a = QTable[state][action];
-        Q_s_a = Q_s_a + alpha * (reward + gamma * largest_qval_in_map(QTable[next_state]).second - Q_s_a);
-        action_reward_pair.insert({action, Q_s_a});
-        QTable.insert({state, action_reward_pair});
-    }
-};
+#include <drone.hpp>
 
 /*
     NAME: main
@@ -236,9 +26,13 @@ int main(int argc, char **argv)
 
     // actions 0 -Left, 1 - Forward, 2- Right
     int action[3] = {0, 1, 2};
+
+    // initial coordinates
     int initial_pos[3] = {0, 0, 0};
+    //
     float alpha = 0.8;
     float gamma = 0.5;
+
     // initialize ros
     ros::init(argc, argv, "drone_nav");
     ros::NodeHandle n;
@@ -260,7 +54,7 @@ int main(int argc, char **argv)
 
     int victim_pos[3] = {20, 20, 0};
     int iterations = 0;
-    Drone drone = Drone(n, victim_pos, INCREMENT, height, alpha, gamma);
+    Drone drone = Drone(n, victim_pos, INCREMENT, height, alpha, gamma, 0.9, 0, 0);
     while (iterations < 3)
     {
         drone.reset();
