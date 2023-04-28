@@ -1,3 +1,9 @@
+/*
+ AUTHOR: Rama Hruday Bandaru
+ FILENAME: drone.cpp
+ SPECIFICATION: abstracts drone classs exposed methods like set qvalue, get_reward etc
+ FOR: CS 5392 Reinforcement Learning Section 01
+*/
 #include <commands_listener.hpp>
 
 std::string state_maker(int i, int j)

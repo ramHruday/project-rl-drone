@@ -1,7 +1,7 @@
 /*
- AUTHOR: Rama Hruday Bandaru
- FILENAME: agent.cpp
- SPECIFICATION: controls agent in our RL problem i.e drone navigation, will extend to hold sensor data in later submissions
+ AUTHOR: Rama Hruday Bandaru, Vamsi Krishna Kasineni,
+ FILENAME: agent_bl.cpp
+ SPECIFICATION: controls agent in our RL problem i.e drone navigation, implements Q-Learinng algorithm
  FOR: CS 5392 Reinforcement Learning Section 01
 */
 

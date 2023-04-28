@@ -1,0 +1,86 @@
+
+/*
+ AUTHOR: Greeshma Kundrapu
+ FILENAME: testcases.txt
+ SPECIFICATION: various configuration sets for drone class.
+ FOR: CS 5392 Reinforcement Learning Section 01
+*/
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+// Test case 1 - Large Alpha nd gamma values, normal increments and height
+    
+    // increment of drone travel
+    int INCREMENT = 5;
+
+    // height of the drone flight
+    int height = 3;
+
+    // actions 0 -Left, 1 - Forward, 2- Right
+    int action[3] = {0, 1, 2};
+    int initial_pos[3] = {0, 0, 0};
+
+    // alpha gamma values for Q_learning
+    float alpha = 0.9;
+    float gamma = 0.5;
+
+    // alpha gamma values for backward_learning
+    float alphab = 0.7;
+    float gammab = 0.55;
+
+    // Threshold for iterations
+    int thresh = 2;
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+// Test case 2 - Small Alpha nd gamma values and normal height and increment
+    
+    // increment of drone travel
+    int INCREMENT = 5;
+
+    // height of the drone flight
+    int height = 3;
+
+    // actions 0 -Left, 1 - Forward, 2- Right
+    int action[3] = {0, 1, 2};
+    int initial_pos[3] = {0, 0, 0};
+
+    // alpha gamma values for Q_learning
+    float alpha = 0.4;
+    float gamma = 0.5;
+
+    // alpha gamma values for backward_learning
+    float alphab = 0.4;
+    float gammab = 0.55;
+
+    // Threshold for iterations
+    int thresh = 2;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+// Test case 3 - Small Alpha nd gamma values and larger height and increment
+    
+    // increment of drone travel
+    int INCREMENT = 10;
+
+    // height of the drone flight
+    int height = 5;
+
+    // actions 0 -Left, 1 - Forward, 2- Right
+    int action[3] = {0, 1, 2};
+    int initial_pos[3] = {0, 0, 0};
+
+    // alpha gamma values for Q_learning
+    float alpha = 0.4;
+    float gamma = 0.5;
+
+    // alpha gamma values for backward_learning
+    float alphab = 0.4;
+    float gammab = 0.55;
+
+    // Threshold for iterations
+    int thresh = 2;
